@@ -1,0 +1,50 @@
+[
+  {
+    "id": "e4b1c201-1b77-4cf0-84a1-8d2643a60001",
+    "name": "Filter Oli",
+    "sku": "SP-001",
+    "category": "Engine",
+    "stock": 12,
+    "minStock": 5,
+    "price": 65000,
+    "location": "Rak A-01",
+    "notes": "Umur pakai 12 bulan",
+    "image": "images/test-image.png"
+  },
+  {
+    "id": "e4b1c201-1b77-4cf0-84a1-8d2643a60002",
+    "name": "Kampas Rem",
+    "sku": "SP-002",
+    "category": "Brake",
+    "stock": 4,
+    "minStock": 6,
+    "price": 180000,
+    "location": "Rak B-02",
+    "notes": "Stok perlu restock",
+    "image": ""
+  },
+  {
+    "id": "e4b1c201-1b77-4cf0-84a1-8d2643a60003",
+    "name": "Relay Lampu",
+    "sku": "SP-003",
+    "category": "Electrical",
+    "stock": 20,
+    "minStock": 8,
+    "price": 95000,
+    "location": "Rak C-01",
+    "notes": "Stock aman",
+    "image": ""
+  },
+  {
+    "id": "e4b1c201-1b77-4cf0-84a1-8d2643a60004",
+    "name": "Seal Piston",
+    "sku": "SP-004",
+    "category": "Engine",
+    "stock": 3,
+    "minStock": 5,
+    "price": 120000,
+    "location": "Rak A-06",
+    "notes": "Pesan ulang segera",
+    "image": ""
+  }
+]
