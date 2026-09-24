@@ -319,7 +319,7 @@ async function addSparepart(event) {
     image: imageData,
   };
 
-  if (!item.name || !item.sku) return;
+  if (!item.name || !/^[a-z0-9]+$/.test(item.sku)) return;
 
   if (form.dataset.mode === 'edit' && form.dataset.editId) {
     spareparts = spareparts.map((part) => {

@@ -2,7 +2,7 @@
   {
     "id": "e4b1c201-1b77-4cf0-84a1-8d2643a60001",
     "name": "Filter Oli",
-    "sku": "SP-001",
+    "sku": "sp001",
     "category": "Engine",
     "stock": 12,
     "minStock": 5,
@@ -14,7 +14,7 @@
   {
     "id": "e4b1c201-1b77-4cf0-84a1-8d2643a60002",
     "name": "Kampas Rem",
-    "sku": "SP-002",
+    "sku": "sp002",
     "category": "Brake",
     "stock": 4,
     "minStock": 6,
@@ -26,7 +26,7 @@
   {
     "id": "e4b1c201-1b77-4cf0-84a1-8d2643a60003",
     "name": "Relay Lampu",
-    "sku": "SP-003",
+    "sku": "sp003",
     "category": "Electrical",
     "stock": 20,
     "minStock": 8,
@@ -38,7 +38,7 @@
   {
     "id": "e4b1c201-1b77-4cf0-84a1-8d2643a60004",
     "name": "Seal Piston",
-    "sku": "SP-004",
+    "sku": "sp004",
     "category": "Engine",
     "stock": 3,
     "minStock": 5,
