@@ -1,9 +1,11 @@
 const STORAGE_KEY = 'sparepart-inventory-v1';
 const CATEGORY_STORAGE_KEY = 'sparepart-categories-v1';
+const ACTIVITY_STORAGE_KEY = 'sparepart-activity-v1';
 const defaultCategories = ['Engine', 'Brake', 'Electrical', 'Body', 'Lubricant'];
 
 let spareparts = [];
 let categories = loadCategories();
+let activities = loadActivities();
 
 const form = document.getElementById('sparepartForm');
 const formTitle = document.getElementById('formTitle');
@@ -26,6 +28,8 @@ const lowStockBadge = document.getElementById('lowStockBadge');
 const totalStockEl = document.getElementById('totalStock');
 const totalValueEl = document.getElementById('totalValue');
 const statusAlert = document.getElementById('statusAlert');
+const activityTableBody = document.getElementById('activityTableBody');
+const clearActivityBtn = document.getElementById('clearActivityBtn');
 
 const categoryModal = document.getElementById('categoryModal');
 const openCategoryModalBtn = document.getElementById('openCategoryModalBtn');
@@ -48,6 +52,37 @@ function loadCategories() {
 
 function saveCategories() {
   localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categories));
+}
+
+function loadActivities() {
+  const stored = localStorage.getItem(ACTIVITY_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+  }
+  return [];
+}
+
+function saveActivities() {
+  localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(activities));
+}
+
+function logActivity({ type, name, sku, change, details }) {
+  const entry = {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    type,
+    name,
+    sku,
+    change,
+    details,
+  };
+  activities.unshift(entry);
+  if (activities.length > 50) activities = activities.slice(0, 50);
+  saveActivities();
+  renderActivities();
 }
 
 function renderCategoryOptions(selectedCat = '') {
@@ -339,20 +374,115 @@ function renderTable() {
     .join('');
 }
 
+function formatTime(isoString) {
+  try {
+    const d = new Date(isoString);
+    const time = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const date = d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return `${time}, ${date}`;
+  } catch (e) {
+    return isoString;
+  }
+}
+
+function renderActivities() {
+  if (!activityTableBody) return;
+
+  if (!activities.length) {
+    activityTableBody.innerHTML = `
+      <tr>
+        <td colspan="6" class="px-4 py-8 text-center text-xs text-zinc-500">
+          Belum ada riwayat aktivitas atau mutasi sparepart yang tercatat.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const badgeMap = {
+    STOCK_INC: { label: '+ Stok', cls: 'bg-emerald-50 text-emerald-800 border-emerald-300' },
+    STOCK_DEC: { label: '- Stok', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
+    ITEM_CREATE: { label: 'Item Baru', cls: 'bg-zinc-900 text-white border-zinc-900' },
+    ITEM_EDIT: { label: 'Edit Data', cls: 'bg-zinc-100 text-zinc-800 border-zinc-300' },
+    ITEM_DELETE: { label: 'Hapus Item', cls: 'bg-rose-50 text-rose-800 border-rose-300' },
+  };
+
+  activityTableBody.innerHTML = activities
+    .map((act) => {
+      const badge = badgeMap[act.type] || { label: act.type, cls: 'bg-zinc-100 text-zinc-700 border-zinc-200' };
+      const changeClass = act.type === 'STOCK_INC' ? 'text-emerald-700' : act.type === 'STOCK_DEC' ? 'text-amber-700' : 'text-zinc-800';
+
+      return `
+        <tr class="hover:bg-zinc-50/80 transition-colors">
+          <td class="px-4 py-3 align-middle font-mono text-xs text-zinc-500 whitespace-nowrap">
+            ${formatTime(act.timestamp)}
+          </td>
+          <td class="px-4 py-3 align-middle whitespace-nowrap">
+            <span class="inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-semibold ${badge.cls}">
+              ${badge.label}
+            </span>
+          </td>
+          <td class="px-4 py-3 align-middle font-semibold text-zinc-950">
+            ${act.name}
+          </td>
+          <td class="px-4 py-3 align-middle font-mono text-xs text-zinc-700 whitespace-nowrap">
+            <span class="inline-flex rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5">${act.sku}</span>
+          </td>
+          <td class="px-4 py-3 align-middle font-mono text-xs font-semibold ${changeClass} whitespace-nowrap">
+            ${act.change}
+          </td>
+          <td class="px-4 py-3 align-middle text-xs text-zinc-600">
+            ${act.details}
+          </td>
+        </tr>
+      `;
+    })
+    .join('');
+}
+
 function updateItemStock(id, delta) {
+  const target = spareparts.find((item) => item.id === id);
+  if (!target) return;
+
+  const prevStock = Number(target.stock);
+  const nextStock = Math.max(0, prevStock + delta);
+  if (prevStock === nextStock && delta < 0) return;
+
   spareparts = spareparts.map((item) => {
     if (item.id !== id) return item;
-    const nextStock = Math.max(0, Number(item.stock) + delta);
     return { ...item, stock: nextStock };
   });
 
   saveSpareparts();
+
+  const type = delta > 0 ? 'STOCK_INC' : 'STOCK_DEC';
+  const changeText = delta > 0 ? `+${delta}` : `${delta}`;
+  logActivity({
+    type,
+    name: target.name,
+    sku: target.sku,
+    change: changeText,
+    details: `Stok fisik diubah dari ${prevStock} menjadi ${nextStock}`,
+  });
+
   render();
 }
 
 function deleteItem(id) {
+  const target = spareparts.find((item) => item.id === id);
+  if (!target) return;
+
   spareparts = spareparts.filter((item) => item.id !== id);
   saveSpareparts();
+
+  logActivity({
+    type: 'ITEM_DELETE',
+    name: target.name,
+    sku: target.sku,
+    change: 'Hapus',
+    details: `Item dihapus dari master inventaris (Stok akhir: ${target.stock})`,
+  });
+
   render();
 }
 
@@ -396,8 +526,22 @@ async function addSparepart(event) {
       if (part.id !== form.dataset.editId) return part;
       return { ...part, ...item };
     });
+    logActivity({
+      type: 'ITEM_EDIT',
+      name: item.name,
+      sku: item.sku,
+      change: 'Edit Data',
+      details: `Pembaruan data sparepart (Stok: ${item.stock}, Lokasi: ${item.location || 'Tidak ada'})`,
+    });
   } else {
     spareparts.unshift({ ...item, id: crypto.randomUUID() });
+    logActivity({
+      type: 'ITEM_CREATE',
+      name: item.name,
+      sku: item.sku,
+      change: `Stok: ${item.stock}`,
+      details: `Sparepart baru ditambahkan ke kategori ${item.category}`,
+    });
   }
 
   saveSpareparts();
@@ -421,6 +565,7 @@ function handleTableClick(event) {
 function render() {
   renderStats();
   renderTable();
+  renderActivities();
 }
 
 form.addEventListener('submit', addSparepart);
@@ -453,6 +598,15 @@ function openCategoryModal() {
 
 function closeCategoryModal() {
   if (categoryModal) categoryModal.close();
+}
+
+if (clearActivityBtn) {
+  clearActivityBtn.addEventListener('click', () => {
+    if (!activities.length) return;
+    activities = [];
+    saveActivities();
+    renderActivities();
+  });
 }
 
 if (openCategoryModalBtn) openCategoryModalBtn.addEventListener('click', openCategoryModal);

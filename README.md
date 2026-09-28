@@ -12,6 +12,7 @@ Aplikasi inventaris sparepart berbasis frontend yang dibuat dengan HTML, JavaScr
 - Sorting data
 - Tambah kategori baru dari modal
 - Update stok naik/turun
+- Riwayat aktivitas dan log mutasi stok otomatis
 - Statistik inventory (total item, stok rendah, total stok, nilai inventory)
 - Upload gambar barang dan preview gambar
 - Data disimpan dalam format JSON

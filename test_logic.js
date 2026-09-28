@@ -29,4 +29,23 @@ assert.strictEqual(filtered[0].sku, 'sp002');
 const nextStock = Math.max(0, 0 - 1);
 assert.strictEqual(nextStock, 0);
 
+// Activity log verification
+let activities = [];
+function logActivity({ type, name, sku, change, details }) {
+  activities.unshift({ type, name, sku, change, details });
+  if (activities.length > 50) activities = activities.slice(0, 50);
+}
+
+logActivity({ type: 'STOCK_INC', name: 'Filter Oli', sku: 'sp001', change: '+1', details: 'Stok fisik diubah dari 12 menjadi 13' });
+logActivity({ type: 'STOCK_DEC', name: 'Kampas Rem', sku: 'sp002', change: '-1', details: 'Stok fisik diubah dari 4 menjadi 3' });
+assert.strictEqual(activities.length, 2);
+assert.strictEqual(activities[0].type, 'STOCK_DEC');
+assert.strictEqual(activities[1].type, 'STOCK_INC');
+
+// Activity cap verification
+for (let i = 0; i < 60; i++) {
+  logActivity({ type: 'STOCK_INC', name: `Item ${i}`, sku: `sp${i}`, change: '+1', details: 'Test cap' });
+}
+assert.strictEqual(activities.length, 50);
+
 console.log('Semua cek logika lolos: PASS');
