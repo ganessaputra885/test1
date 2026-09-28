@@ -3,156 +3,344 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inventory Sparepart</title>
+    <title>Inventory Sparepart | Workshop Depo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind.config.js"></script>
   </head>
-  <body class="min-h-screen bg-slate-100 text-slate-800 antialiased">
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <header class="mb-8 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-soft backdrop-blur-sm md:flex-row md:items-center md:justify-between">
-        <div>
-          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">Dashboard</p>
-          <h1 class="text-2xl font-bold text-slate-900 sm:text-3xl">Inventory Sparepart</h1>
+  <body class="min-h-screen bg-zinc-100 text-zinc-900 antialiased selection:bg-amber-200 selection:text-zinc-900">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+      
+      <!-- Top Operational Header -->
+      <header class="flex flex-col gap-4 rounded-xl border border-zinc-300 bg-white p-5 shadow-panel sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-white font-mono font-bold text-sm">
+            OPS
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center rounded bg-zinc-100 px-2 py-0.5 text-[11px] font-mono font-medium text-zinc-700 border border-zinc-200 uppercase tracking-wider">Gudang Bengkel</span>
+              <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                Katalog Aktif
+              </span>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-zinc-950 sm:text-2xl mt-0.5">Inventory Sparepart</h1>
+          </div>
         </div>
-        <div>
-          <button id="openCategoryModalBtn" type="button" class="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700">
-            + Tambah Kategori
+
+        <div class="flex items-center gap-2">
+          <button
+            id="openCategoryModalBtn"
+            type="button"
+            class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-100 hover:border-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+          >
+            <svg class="h-4 w-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Tambah Kategori
           </button>
         </div>
       </header>
 
-      <section class="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
-          <span class="block text-sm font-medium text-slate-500">Total Item</span>
-          <strong id="totalItems" class="mt-3 block text-3xl font-bold text-slate-900">0</strong>
+      <!-- Global Alert / Error banner container -->
+      <div id="statusAlert" class="hidden rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"></div>
+
+      <!-- Quick Metrics Grid -->
+      <section aria-label="Ringkasan Inventaris" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-panel">
+          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total Item (SKU)</span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <strong id="totalItems" class="text-3xl font-bold font-mono text-zinc-900 tracking-tight">0</strong>
+            <span class="text-xs text-zinc-600">terdaftar</span>
+          </div>
         </div>
-        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-soft">
-          <span class="block text-sm font-medium text-amber-700">Stok Rendah</span>
-          <strong id="lowStockCount" class="mt-3 block text-3xl font-bold text-amber-600">0</strong>
+
+        <div id="lowStockCard" class="rounded-xl border border-zinc-200 bg-white p-4 shadow-panel transition-colors">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Stok Rendah</span>
+            <span id="lowStockBadge" class="hidden rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 border border-amber-300">Perhatian</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <strong id="lowStockCount" class="text-3xl font-bold font-mono text-zinc-900 tracking-tight">0</strong>
+            <span class="text-xs text-zinc-600">di bawah batas</span>
+          </div>
         </div>
-        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-soft">
-          <span class="block text-sm font-medium text-emerald-700">Total Stok</span>
-          <strong id="totalStock" class="mt-3 block text-3xl font-bold text-emerald-600">0</strong>
+
+        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-panel">
+          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total Kuantitas Fisik</span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <strong id="totalStock" class="text-3xl font-bold font-mono text-zinc-900 tracking-tight">0</strong>
+            <span class="text-xs text-zinc-600">unit di rak</span>
+          </div>
         </div>
-        <div class="rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-soft">
-          <span class="block text-sm font-medium text-sky-700">Nilai Inventory</span>
-          <strong id="totalValue" class="mt-3 block text-2xl font-bold text-sky-700">Rp 0</strong>
+
+        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-panel">
+          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Estimasi Nilai Stok</span>
+          <div class="mt-2">
+            <strong id="totalValue" class="text-2xl font-bold font-mono text-zinc-900 tracking-tight block truncate">Rp 0</strong>
+            <span class="text-xs text-zinc-600">valuasi inventaris</span>
+          </div>
         </div>
       </section>
 
-      <section class="mb-8 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
-        <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
-          <h2 class="text-xl font-bold text-slate-900">Tambah Sparepart</h2>
+      <!-- Input & Edit Form Panel -->
+      <section class="overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-panel">
+        <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/80 px-5 py-3.5">
+          <div class="flex items-center gap-2.5">
+            <span id="formModeIcon" class="h-2.5 w-2.5 rounded-full bg-zinc-900"></span>
+            <h2 id="formTitle" class="text-base font-bold text-zinc-900">Tambah Sparepart Baru</h2>
+          </div>
+          <span id="formModeBadge" class="rounded border border-zinc-200 bg-white px-2 py-0.5 text-xs font-mono font-medium text-zinc-600">Mode: Entri Baru</span>
         </div>
-        <form id="sparepartForm" class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
-          <div class="flex flex-col gap-2">
-            <label for="name" class="text-sm font-medium text-slate-600">Nama Sparepart</label>
-            <input id="name" name="name" type="text" placeholder="Contoh: Filter Oli" required class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" />
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="sku" class="text-sm font-medium text-slate-600">SKU</label>
-            <input id="sku" name="sku" type="text" placeholder="sp001" pattern="[a-z0-9]+" title="Hanya huruf kecil dan angka tanpa spasi atau simbol" required class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" />
-          </div>
-          <div class="flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <label for="category" class="text-sm font-medium text-slate-600">Kategori</label>
-              <button type="button" id="quickAddCategoryBtn" class="text-xs font-semibold text-sky-600 hover:text-sky-700">+ Tambah Baru</button>
+
+        <form id="sparepartForm" class="p-5 space-y-5">
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            
+            <div class="flex flex-col gap-1.5">
+              <label for="name" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Nama Sparepart <span class="text-rose-600">*</span></label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="Misal: Kampas Rem Depan"
+                required
+                class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              />
             </div>
-            <select id="category" name="category" class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
-            </select>
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="stock" class="text-sm font-medium text-slate-600">Stok</label>
-            <input id="stock" name="stock" type="number" min="0" value="0" required class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" />
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="minStock" class="text-sm font-medium text-slate-600">Minimal Stok</label>
-            <input id="minStock" name="minStock" type="number" min="0" value="5" required class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" />
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="price" class="text-sm font-medium text-slate-600">Harga Satuan</label>
-            <input id="price" name="price" type="number" min="0" value="0" required class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" />
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="location" class="text-sm font-medium text-slate-600">Lokasi</label>
-            <input id="location" name="location" type="text" placeholder="Rak A-01" class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" />
-          </div>
-          <div class="flex flex-col gap-2 md:col-span-2 xl:col-span-1">
-            <label for="image" class="text-sm font-medium text-slate-600">Gambar Barang</label>
-            <input id="image" name="image" type="file" accept="image/*" class="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" />
-          </div>
-          <div class="md:col-span-2 xl:col-span-3">
-            <div class="flex flex-col gap-2">
-              <label for="notes" class="text-sm font-medium text-slate-600">Catatan</label>
-              <textarea id="notes" name="notes" rows="3" placeholder="Catatan tambahan..." class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea>
+
+            <div class="flex flex-col gap-1.5">
+              <label for="sku" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Kode SKU <span class="text-rose-600">*</span></label>
+              <input
+                id="sku"
+                name="sku"
+                type="text"
+                placeholder="sp001 (huruf kecil & angka)"
+                pattern="[a-z0-9]+"
+                title="Hanya huruf kecil dan angka tanpa spasi atau simbol"
+                required
+                class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <label for="category" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Kategori <span class="text-rose-600">*</span></label>
+                <button type="button" id="quickAddCategoryBtn" class="text-xs font-semibold text-zinc-700 hover:text-zinc-950 underline underline-offset-2">
+                  + Buat Baru
+                </button>
+              </div>
+              <select
+                id="category"
+                name="category"
+                class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              ></select>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label for="stock" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Stok Fisik Awal <span class="text-rose-600">*</span></label>
+              <input
+                id="stock"
+                name="stock"
+                type="number"
+                min="0"
+                value="0"
+                required
+                class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label for="minStock" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Batas Minimum Stok <span class="text-rose-600">*</span></label>
+              <input
+                id="minStock"
+                name="minStock"
+                type="number"
+                min="0"
+                value="5"
+                required
+                class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label for="price" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Harga Satuan (Rp) <span class="text-rose-600">*</span></label>
+              <input
+                id="price"
+                name="price"
+                type="number"
+                min="0"
+                value="0"
+                required
+                class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label for="location" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Posisi Rak Penyimpanan</label>
+              <input
+                id="location"
+                name="location"
+                type="text"
+                placeholder="Misal: Rak A-02"
+                class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-2">
+              <label for="image" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Foto Komponen</label>
+              <input
+                id="image"
+                name="image"
+                type="file"
+                accept="image/*"
+                class="min-h-[44px] block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-800 file:mr-3 file:rounded file:border-0 file:bg-zinc-100 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-zinc-700 hover:file:bg-zinc-200 outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-3">
+              <label for="notes" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Catatan Teknis & Spesifikasi</label>
+              <textarea
+                id="notes"
+                name="notes"
+                rows="2"
+                placeholder="Spesifikasi part, nomor OEM, kecocokan tipe kendaraan, atau instruksi penanganan..."
+                class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+              ></textarea>
             </div>
           </div>
-          <div class="md:col-span-2 xl:col-span-3 hidden" id="imagePreviewWrap">
-            <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <img id="imagePreview" alt="Preview gambar barang" class="h-20 w-20 rounded-xl object-cover ring-1 ring-slate-200" />
-              <span class="text-sm font-medium text-slate-600">Preview gambar barang</span>
+
+          <div id="imagePreviewWrap" class="hidden">
+            <div class="flex items-center gap-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+              <img id="imagePreview" alt="Pratinjau komponen" class="h-16 w-16 rounded-md object-cover border border-zinc-300 bg-white" />
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-600">Pratinjau Berkas Gambar</p>
+                <p class="text-xs text-zinc-500">Gambar siap disimpan bersama data item.</p>
+              </div>
             </div>
           </div>
-          <div class="md:col-span-2 xl:col-span-3 flex items-center justify-end gap-3 pt-2">
-            <button type="button" id="cancelEditBtn" class="hidden rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-100">Batal Edit</button>
-            <button type="submit" id="submitBtn" class="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200">Simpan Sparepart</button>
+
+          <div class="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-zinc-100">
+            <button
+              type="button"
+              id="cancelEditBtn"
+              class="hidden min-h-[44px] items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+            >
+              Batal Edit
+            </button>
+            <button
+              type="submit"
+              id="submitBtn"
+              class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-zinc-950 px-5 py-2 text-sm font-semibold text-white shadow-panel transition hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+            >
+              Simpan Sparepart
+            </button>
           </div>
         </form>
       </section>
 
-      <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
-        <div class="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 md:flex-row md:items-center md:justify-between">
-          <h2 class="text-xl font-bold text-slate-900">Daftar Sparepart</h2>
-          <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input id="searchInput" type="search" placeholder="Cari nama / SKU" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 sm:w-48" />
-            <select id="categoryFilter" class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
+      <!-- Sparepart Table Section -->
+      <section class="overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-panel">
+        <div class="flex flex-col gap-4 border-b border-zinc-200 bg-zinc-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-base font-bold text-zinc-950">Daftar Komponen & Stok</h2>
+            <p class="text-xs text-zinc-500">Data terorganisir per posisi rak gudang dan batas minimum stok.</p>
+          </div>
+          
+          <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+            <div class="relative">
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Cari nama atau SKU..."
+                class="min-h-[44px] w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 sm:w-56"
+              />
+            </div>
+            
+            <select
+              id="categoryFilter"
+              class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+            >
               <option value="all">Semua Kategori</option>
             </select>
-            <select id="sortSelect" class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
-              <option value="default">Urutkan: Default</option>
+
+            <select
+              id="sortSelect"
+              class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+            >
+              <option value="default">Urutan: Default</option>
               <option value="price-asc">Harga Terendah</option>
               <option value="price-desc">Harga Tertinggi</option>
               <option value="category">Kategori</option>
               <option value="stock-asc">Stok Terendah</option>
-              <option value="location">Lokasi</option>
-              <option value="sku">SKU</option>
+              <option value="location">Posisi Rak</option>
+              <option value="sku">Kode SKU</option>
             </select>
           </div>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50">
+          <table class="w-full text-left border-collapse">
+            <thead class="border-b border-zinc-200 bg-zinc-100 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
               <tr>
-                <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Nama</th>
-                <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">SKU</th>
-                <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Kategori</th>
-                <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Stok</th>
-                <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Min</th>
-                <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Harga</th>
-                <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Lokasi</th>
-                <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Aksi</th>
+                <th scope="col" class="px-4 py-3">Komponen</th>
+                <th scope="col" class="px-4 py-3">SKU</th>
+                <th scope="col" class="px-4 py-3">Kategori</th>
+                <th scope="col" class="px-4 py-3">Stok Fisik</th>
+                <th scope="col" class="px-4 py-3">Batas Min</th>
+                <th scope="col" class="px-4 py-3">Harga Satuan</th>
+                <th scope="col" class="px-4 py-3">Posisi Rak</th>
+                <th scope="col" class="px-4 py-3 text-right">Aksi Cepat</th>
               </tr>
             </thead>
-            <tbody id="sparepartTableBody" class="divide-y divide-slate-100 bg-white"></tbody>
+            <tbody id="sparepartTableBody" class="divide-y divide-zinc-200 bg-white text-sm"></tbody>
           </table>
         </div>
       </section>
+
     </div>
 
-    <dialog id="categoryModal" class="m-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl backdrop:bg-slate-900/40 w-full max-w-sm">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 class="text-lg font-bold text-slate-900">Tambah Kategori</h3>
-        <button type="button" id="closeCategoryModalBtn" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+    <!-- Category Modal -->
+    <dialog id="categoryModal" class="m-auto rounded-xl border border-zinc-300 bg-white p-6 shadow-2xl backdrop:bg-zinc-950/50 w-full max-w-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-200">
+        <h3 class="text-base font-bold text-zinc-950">Tambah Kategori Baru</h3>
+        <button
+          type="button"
+          id="closeCategoryModalBtn"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+          aria-label="Tutup modal"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-      <form id="categoryForm" class="mt-4 flex flex-col gap-3">
+
+      <form id="categoryForm" class="mt-4 space-y-4">
         <div class="flex flex-col gap-1.5">
-          <label for="newCategoryName" class="text-xs font-medium text-slate-600">Nama Kategori</label>
-          <input id="newCategoryName" type="text" placeholder="Contoh: Suspensi" required class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" />
+          <label for="newCategoryName" class="text-xs font-semibold uppercase tracking-wider text-zinc-700">Nama Kategori</label>
+          <input
+            id="newCategoryName"
+            type="text"
+            placeholder="Contoh: Suspensi, Filter, AC"
+            required
+            class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+          />
         </div>
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button type="button" id="cancelCategoryModalBtn" class="rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-200">Batal</button>
-          <button type="submit" class="rounded-xl bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-500">Simpan Kategori</button>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
+          <button
+            type="button"
+            id="cancelCategoryModalBtn"
+            class="min-h-[44px] rounded-lg border border-zinc-300 bg-white px-4 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            class="min-h-[44px] rounded-lg bg-zinc-950 px-4 py-2 text-xs font-semibold text-white shadow-panel transition hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+          >
+            Simpan Kategori
+          </button>
         </div>
       </form>
     </dialog>

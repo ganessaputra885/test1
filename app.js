@@ -6,6 +6,9 @@ let spareparts = [];
 let categories = loadCategories();
 
 const form = document.getElementById('sparepartForm');
+const formTitle = document.getElementById('formTitle');
+const formModeBadge = document.getElementById('formModeBadge');
+const formModeIcon = document.getElementById('formModeIcon');
 const submitBtn = document.getElementById('submitBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const categorySelect = document.getElementById('category');
@@ -18,8 +21,11 @@ const categoryFilter = document.getElementById('categoryFilter');
 const sortSelect = document.getElementById('sortSelect');
 const totalItemsEl = document.getElementById('totalItems');
 const lowStockCountEl = document.getElementById('lowStockCount');
+const lowStockCard = document.getElementById('lowStockCard');
+const lowStockBadge = document.getElementById('lowStockBadge');
 const totalStockEl = document.getElementById('totalStock');
 const totalValueEl = document.getElementById('totalValue');
+const statusAlert = document.getElementById('statusAlert');
 
 const categoryModal = document.getElementById('categoryModal');
 const openCategoryModalBtn = document.getElementById('openCategoryModalBtn');
@@ -83,6 +89,9 @@ function resetForm() {
   form.dataset.imageData = '';
   submitBtn.textContent = 'Simpan Sparepart';
   cancelEditBtn.style.display = 'none';
+  if (formTitle) formTitle.textContent = 'Tambah Sparepart Baru';
+  if (formModeBadge) formModeBadge.textContent = 'Mode: Entri Baru';
+  if (formModeIcon) formModeIcon.className = 'h-2.5 w-2.5 rounded-full bg-zinc-900';
   if (categorySelect && categories.length) categorySelect.value = categories[0];
   if (imageInput) imageInput.value = '';
   if (imagePreview) imagePreview.src = '';
@@ -96,8 +105,11 @@ function fillForm(item) {
   form.dataset.mode = 'edit';
   form.dataset.editId = item.id;
   form.dataset.imageData = item.image || '';
-  submitBtn.textContent = 'Update Sparepart';
+  submitBtn.textContent = 'Perbarui Sparepart';
   cancelEditBtn.style.display = 'inline-flex';
+  if (formTitle) formTitle.textContent = `Edit Sparepart: ${item.name}`;
+  if (formModeBadge) formModeBadge.textContent = 'Mode: Edit';
+  if (formModeIcon) formModeIcon.className = 'h-2.5 w-2.5 rounded-full bg-amber-500';
 
   document.getElementById('name').value = item.name;
   document.getElementById('sku').value = item.sku;
@@ -136,7 +148,7 @@ async function loadSpareparts() {
         return parsed;
       }
     } catch (error) {
-      console.error('Error reading storage', error);
+      console.error('Gagal membaca penyimpanan lokal', error);
     }
   }
 
@@ -150,7 +162,11 @@ async function loadSpareparts() {
       }
     }
   } catch (error) {
-    console.error('Error loading data.json', error);
+    console.error('Gagal memuat data.json', error);
+    if (statusAlert) {
+      statusAlert.textContent = 'Perhatian: Berkas data.json tidak dapat dimuat otomatis. Pastikan aplikasi berjalan via web server lokal.';
+      statusAlert.classList.remove('hidden');
+    }
   }
 
   return [];
@@ -210,6 +226,16 @@ function renderStats() {
   lowStockCountEl.textContent = lowStockCount;
   totalStockEl.textContent = totalStock;
   totalValueEl.textContent = formatCurrency(totalValue);
+
+  if (lowStockCard && lowStockBadge) {
+    if (lowStockCount > 0) {
+      lowStockCard.classList.add('border-amber-300', 'bg-amber-50/40');
+      lowStockBadge.classList.remove('hidden');
+    } else {
+      lowStockCard.classList.remove('border-amber-300', 'bg-amber-50/40');
+      lowStockBadge.classList.add('hidden');
+    }
+  }
 }
 
 function renderTable() {
@@ -218,7 +244,12 @@ function renderTable() {
   if (!filteredItems.length) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="9" class="px-4 py-10 text-center text-sm text-slate-500">Data sparepart tidak ditemukan.</td>
+        <td colspan="8" class="px-4 py-12 text-center">
+          <div class="mx-auto max-w-sm">
+            <p class="text-sm font-semibold text-zinc-900">Data sparepart tidak ditemukan</p>
+            <p class="mt-1 text-xs text-zinc-500">Sesuaikan kata kunci pencarian, filter kategori, atau tambahkan sparepart baru melalui formulir di atas.</p>
+          </div>
+        </td>
       </tr>
     `;
     return;
@@ -227,40 +258,79 @@ function renderTable() {
   tableBody.innerHTML = filteredItems
     .map((item) => {
       const lowStock = item.stock <= item.minStock;
-      const stockClass = lowStock
-        ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200'
-        : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200';
-      const imageSrc = item.image || 'https://placehold.co/80x80/edf2f7/475569?text=IMG';
+      const stockBadge = lowStock
+        ? `<span class="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 font-mono text-xs font-bold text-amber-900 border border-amber-300"><span class="h-1.5 w-1.5 rounded-full bg-amber-600"></span>${item.stock}</span>`
+        : `<span class="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 font-mono text-xs font-bold text-emerald-800 border border-emerald-200"><span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>${item.stock}</span>`;
+
+      const imageVisual = item.image
+        ? `<img src="${item.image}" alt="${item.name}" class="h-11 w-11 shrink-0 rounded-lg object-cover border border-zinc-300 bg-white" />`
+        : `<div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-400 font-mono text-[11px] font-bold">N/A</div>`;
 
       return `
-        <tr class="hover:bg-slate-50">
-          <td class="px-4 py-4 align-top">
-            <div class="flex items-center gap-3">
-              <img src="${imageSrc}" alt="${item.name}" class="h-12 w-12 rounded-xl object-cover ring-1 ring-slate-200" />
-              <div>
-                <div class="font-semibold text-slate-900">${item.name}</div>
-                ${item.notes ? `<p class="mt-1 text-xs text-slate-500">${item.notes}</p>` : ''}
+        <tr class="hover:bg-zinc-50/80 transition-colors">
+          <td class="px-4 py-3.5 align-top">
+            <div class="flex items-start gap-3">
+              ${imageVisual}
+              <div class="min-w-0">
+                <div class="font-bold text-zinc-950">${item.name}</div>
+                ${item.notes ? `<p class="mt-0.5 text-xs text-zinc-500 line-clamp-2">${item.notes}</p>` : ''}
               </div>
             </div>
           </td>
-          <td class="px-4 py-4">
-            <span class="inline-flex rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700">${item.sku}</span>
+          <td class="px-4 py-3.5 align-top font-mono text-xs">
+            <span class="inline-flex rounded border border-zinc-200 bg-zinc-100 px-2 py-0.5 font-medium text-zinc-800">${item.sku}</span>
           </td>
-          <td class="px-4 py-4">
-            <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">${item.category}</span>
+          <td class="px-4 py-3.5 align-top text-xs font-medium text-zinc-700">
+            ${item.category}
           </td>
-          <td class="px-4 py-4">
-            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${stockClass}">${item.stock}</span>
+          <td class="px-4 py-3.5 align-top">
+            ${stockBadge}
           </td>
-          <td class="px-4 py-4 text-sm text-slate-600">${item.minStock}</td>
-          <td class="px-4 py-4 text-sm font-medium text-slate-700">${formatCurrency(item.price)}</td>
-          <td class="px-4 py-4 text-sm text-slate-600">${item.location || '-'}</td>
-          <td class="px-4 py-4">
-            <div class="flex flex-wrap items-center gap-2">
-              <button type="button" class="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100" data-action="edit" data-id="${item.id}">Edit</button>
-              <button type="button" class="rounded-lg border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-200" data-action="decrease" data-id="${item.id}">-</button>
-              <button type="button" class="rounded-lg border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-200" data-action="increase" data-id="${item.id}">+</button>
-              <button type="button" class="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100" data-action="delete" data-id="${item.id}">Hapus</button>
+          <td class="px-4 py-3.5 align-top font-mono text-xs text-zinc-600">
+            ${item.minStock}
+          </td>
+          <td class="px-4 py-3.5 align-top font-mono text-xs font-semibold text-zinc-900">
+            ${formatCurrency(item.price)}
+          </td>
+          <td class="px-4 py-3.5 align-top font-mono text-xs text-zinc-600">
+            ${item.location || '-'}
+          </td>
+          <td class="px-4 py-3.5 align-top text-right">
+            <div class="flex flex-wrap items-center justify-end gap-1.5">
+              <button
+                type="button"
+                class="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+                data-action="edit"
+                data-id="${item.id}"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                class="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-mono font-bold text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+                data-action="decrease"
+                data-id="${item.id}"
+                aria-label="Kurangi stok ${item.name}"
+              >
+                -
+              </button>
+              <button
+                type="button"
+                class="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-mono font-bold text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"
+                data-action="increase"
+                data-id="${item.id}"
+                aria-label="Tambah stok ${item.name}"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                class="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                data-action="delete"
+                data-id="${item.id}"
+              >
+                Hapus
+              </button>
             </div>
           </td>
         </tr>
@@ -402,6 +472,17 @@ if (categoryForm) {
 }
 
 async function init() {
+  tableBody.innerHTML = `
+    <tr>
+      <td colspan="8" class="px-4 py-12 text-center text-sm text-zinc-500">
+        <div class="inline-flex items-center gap-2">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent"></span>
+          <span>Memuat data sparepart...</span>
+        </div>
+      </td>
+    </tr>
+  `;
+
   spareparts = await loadSpareparts();
   spareparts.forEach((item) => {
     if (item.category && !categories.includes(item.category)) {
